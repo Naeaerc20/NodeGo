@@ -1,7 +1,7 @@
 {
   "name": "NodeGo",
   "version": "1.0.0",
-  "description": "NodeGo Project",
+  "description": "NodeGo Project created by Naeaex",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
