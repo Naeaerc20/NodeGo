@@ -171,7 +171,7 @@ async function registerAccountOption() {
   await inquirer.prompt({ type: 'input', name: 'enter', message: 'Press Enter to return to Main Menu...' });
 }
 
-const PING_INTERVAL_MS = 6000;
+const PING_INTERVAL_MS = 10000;
 
 async function runExtensionNodeOption() {
   const { autoToken } = await inquirer.prompt({
@@ -265,8 +265,8 @@ async function runExtensionNodeOption() {
       accessToken = tokenObj.access_token;
     }
 
-    const MIN_DEVICES = 3;
-    const MAX_DEVICES = 8;
+    const MIN_DEVICES = 1;
+    const MAX_DEVICES = 5;
     const deviceCount = Math.floor(Math.random() * (MAX_DEVICES - MIN_DEVICES + 1)) + MIN_DEVICES;
     logger.info(`Account ${account.id} will connect ${deviceCount} device(s).`);
 

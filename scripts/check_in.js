@@ -79,9 +79,9 @@ async function performCheckIn() {
           points = match[1];
         }
       }
-      console.log(colors.green(`Account [${accountId}] Has successfully made check-in & claimed ${points} Points`));
+      console.log(colors.green(`Account [${accountId}] Has successfully made check-in & claimed ${points} Points \n`));
     } catch (err) {
-      console.log(colors.green(`Error during check-in for Account [${accountId}]: ${err.message}`));
+      console.log(colors.green(`Error during check-in for Account [${accountId}]: ${err.message} \n`));
     }
     // Wait 5 seconds before processing the next account
     await delay(5000);
@@ -91,7 +91,7 @@ async function performCheckIn() {
   const lowerBound = 24 * 3600 * 1000; // 24 hours in ms
   const upperBound = 29 * 3600 * 1000; // 29 hours in ms
   const nextDelay = Math.floor(Math.random() * (upperBound - lowerBound) + lowerBound);
-  console.log(colors.green(`Script Programmed to Perform next Check-In in ${formatTime(nextDelay)}`));
+  console.log(colors.green(`🕥 Script Programmed to Perform next Check-In in ${formatTime(nextDelay)}`));
   setTimeout(performCheckIn, nextDelay);
 }
 
