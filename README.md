@@ -6,11 +6,11 @@
 
    - **2CAPTCHA:**  
      Register an account on [2CAPTCHA](https://2captcha.com/enterpage) and obtain your API key.  
-     ![2CAPTCHA Screenshot] (https://prnt.sc/WVazuVGHK2Pm)  
+     [2CAPTCHA Screenshot](https://prnt.sc/WVazuVGHK2Pm)  
      Make sure to top up your account with $2 or $3 since each captcha solution costs around $0.01.  
      Insert your API_KEY in the file `scripts/solve_captcha.py` using `nano scripts/solve_captcha.py`.  
      Example:  
-     ![API_KEY Example] (https://prnt.sc/jpcWeEfXiNGj)
+     [API_KEY Example](https://prnt.sc/jpcWeEfXiNGj)
 
    - **922 Proxies:**  
      Register an account on 922 and obtain proxies from the [Long Acting Traffic Dashboard](https://center.922proxy.com/Dashboard/LongActingTraffic).  
@@ -18,7 +18,7 @@
      It is recommended to generate at least 300 proxies and insert them into `922_proxies.txt` file.
 
      Example:  
-     ![922 Proxies Example] (https://prnt.sc/aS2rqJvjy7nU)
+     [922 Proxies Example](https://prnt.sc/aS2rqJvjy7nU)
 
 2. **Usage Instructions**
 
