@@ -31,6 +31,7 @@
    - Add your accounts to `helpers/accounts.json`. with specific promt
    - Run the script using the provided npm commands.
    - Enjoy using NODEGO!
+   - Edit "refBy" on "index.js" and set your own referral script to auto-refer yourself [Example](https://prnt.sc/rVOhbh-RWXJT)
 
 For any questions, please contact me at:
 - [t.me/Naeaex](https://t.me/Naeaex)
