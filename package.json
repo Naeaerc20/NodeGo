@@ -1,0 +1,23 @@
+{
+  "name": "NodeGo",
+  "version": "1.0.0",
+  "description": "NodeGo Project",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "agents": "node scripts/user_agent_creator.js",
+    "checkin": "node scripts/check_in.js",
+    "add": "node scripts/aggregate_account.js",
+    "converter": "node scripts/converter.js"
+  },
+  "dependencies": {
+    "axios": "1.7.9",
+    "colors": "1.4.0",
+    "@faker-js/faker": "^7.6.0",
+    "figlet": "1.8.0",
+    "inquirer": "^8.2.4",
+    "winston": "3.17.0",
+    "console-clear": "^1.0.2",
+    "socks-proxy-agent": "^8.0.5"
+  }
+}

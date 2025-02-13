@@ -1,0 +1,63 @@
+NodeGo Project - Help Guide
+===========================
+
+This project includes several commands that allow you to run different parts of the application.
+
+Available Commands
+------------------
+
+1. npm start
+   - Usage: npm start
+   - Description: Launches the main application logic contained in "index.js".
+
+2. npm run agents
+   - Usage: npm run agents
+   - Description: Executes "scripts/user_agent_creator.js".
+     * Prompts you to enter the number of user-agents you wish to generate.
+     * Generates user-agents based on "Mozilla/5.0" and random additional details.
+     * Saves the generated user-agents to "helpers/agents.txt".
+
+3. npm run checkin
+   - Usage: npm run checkin
+   - Description: Executes "scripts/check_in.js".
+     * Note: Performs daily check-in for all accounts in random time between 24-29 hours to avoid sybil
+
+4. npm run add
+   - Usage: nom run add
+   - Description: Executes "scripts/aggregate_account.js"
+     * This code ask you to prompt your email/username and password for account operation
+
+5. npm run converter
+   - Usage: npm run converter
+   - Description: Executes "node scripts/converter.js"
+     * This script conver all proxies saved in "922_proxies.txt" in socks5:// format and save them on "proxies.txt" ready to be used for main script
+
+Dependencies
+------------
+The project utilizes the following modules:
+  - axios@1.7.9
+  - colors@1.4.0
+  - faker@6.6.6
+  - figlet@1.8.0
+  - inquirer@^8.2.4
+  - winston@3.17.0
+  - console-clear@^1.0.2
+  - socks-proxy-agent@^8.0.5
+
+Setup
+-----
+
+1. Clone the repository using:
+   git clone https://github.com/Naeaerc20/NodeGo
+
+2. Open main directory using:
+   cd NodeGo
+
+3. Install all dependencies by running:
+   npm install
+
+4. Use the commands above to run the corresponding parts of the application.
+
+For additional information or updates, please refer to the project documentation or contact the project maintainer.
+
+Thank you for using NodeGo!
