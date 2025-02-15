@@ -16,20 +16,16 @@ function getRandomUserAgent() {
   }
 }
 
-// Agentes Keep-Alive + rejectUnauthorized: false
 const keepAliveHttpAgent = new http.Agent({ keepAlive: true });
 const keepAliveHttpsAgent = new https.Agent({
   keepAlive: true,
-  rejectUnauthorized: false   // Opción 3: se ignoran problemas de certificados/SSL
+  rejectUnauthorized: false
 });
 
-function createAxiosInstance(proxy) {
-  const headers = { 'User-Agent': getRandomUserAgent() };
+function createAxiosInstance(proxy, userAgent) {
+  const headers = { 'User-Agent': userAgent || getRandomUserAgent() };
 
-  // Si se especifica un proxy, se usa socks-proxy-agent
   if (proxy) {
-    // socks-proxy-agent no soporta directamente rejectUnauthorized.
-    // Quedará "inseguro" en la medida en que el proxy maneje la conexión.
     const socksAgent = new SocksProxyAgent(proxy);
     return axios.create({
       httpAgent: socksAgent,
@@ -39,7 +35,6 @@ function createAxiosInstance(proxy) {
     });
   }
 
-  // Sin proxy, se usa keepAlive con rejectUnauthorized: false
   return axios.create({
     httpAgent: keepAliveHttpAgent,
     httpsAgent: keepAliveHttpsAgent,
@@ -71,8 +66,8 @@ async function makeCheckIn(accessToken, proxy) {
   });
 }
 
-async function sendPing(accessToken, proxy) {
-  const instance = createAxiosInstance(proxy);
+async function sendPing(accessToken, proxy, userAgent) {
+  const instance = createAxiosInstance(proxy, userAgent);
   const mergedHeaders = {
     ...instance.defaults.headers.common,
     'Authorization': `Bearer ${accessToken}`
@@ -99,3 +94,4 @@ module.exports = {
   getClientIP,
   getProxyIP
 };
+

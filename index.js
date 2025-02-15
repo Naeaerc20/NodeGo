@@ -10,10 +10,20 @@ const apis = require('./scripts/apis.js');
 const { SocksProxyAgent } = require('socks-proxy-agent');
 const axios = require('axios');
 
+// Filtro para omitir advertencias SSL con "wrong version number"
+const filterSslWarnings = winston.format((info) => {
+  if (info.message && info.message.includes('wrong version number')) {
+    return false;
+  }
+  return info;
+});
+
+// Configuración del logger
 winston.addColors({ info: 'blue', warn: 'yellow', error: 'red' });
 const logger = winston.createLogger({
   level: 'info',
   format: winston.format.combine(
+    filterSslWarnings(),
     winston.format((info) => {
       info.level = `[${info.level.toUpperCase()}]`;
       return info;
@@ -40,14 +50,30 @@ function getProxiesList() {
   }
 }
 
+function getUserAgentsList() {
+  const agentsFilePath = path.join(__dirname, 'helpers', 'agents.txt');
+  try {
+    const data = fs.readFileSync(agentsFilePath, 'utf8');
+    return data.split('\n').map(line => line.trim()).filter(Boolean);
+  } catch (error) {
+    return ['Mozilla/5.0'];
+  }
+}
+
+// Listas globales e índices para asignar proxies y user‑agents de forma única
+const proxiesList = getProxiesList();
+const userAgentsList = getUserAgentsList();
+let globalProxyIndex = 0;
+let globalUserAgentIndex = 0;
+
 const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
 
-async function trySendPing(accessToken, proxy, details) {
+async function trySendPing(accessToken, proxy, details, userAgent) {
   let attempt = 0;
   const maxAttempts = 3;
   while (attempt < maxAttempts) {
     try {
-      const response = await apis.sendPing(accessToken, proxy);
+      const response = await apis.sendPing(accessToken, proxy, userAgent);
       return response;
     } catch (err) {
       if (err.response && err.response.status === 520) {
@@ -112,14 +138,15 @@ async function registerAccountOption() {
   }
   console.log("Captcha Solved");
 
-  const proxiesList = getProxiesList();
   if (proxiesList.length === 0) {
     console.error("No proxy available, please check proxies.txt");
     await inquirer.prompt({ type: 'input', name: 'enter', message: 'Press Enter to return to Main Menu...' });
     return;
   }
 
-  const proxy = proxiesList[Math.floor(Math.random() * proxiesList.length)];
+  // Se usa un proxy aleatorio para el registro
+  const randomIndex = Math.floor(Math.random() * proxiesList.length);
+  const proxy = proxiesList[randomIndex];
   const proxyIdMatch = proxy.match(/socks5:\/\/[^-]+-zone-custom-(?:session|sessid)-([^-\n]+)-sessTime-/);
   const proxyId = proxyIdMatch ? proxyIdMatch[1] : "Unknown";
   let proxyIP = "Unknown";
@@ -171,7 +198,7 @@ async function registerAccountOption() {
   await inquirer.prompt({ type: 'input', name: 'enter', message: 'Press Enter to return to Main Menu...' });
 }
 
-const PING_INTERVAL_MS = 10000;
+const PING_INTERVAL_MS = 5000;
 
 async function runExtensionNodeOption() {
   const { autoToken } = await inquirer.prompt({
@@ -191,7 +218,6 @@ async function runExtensionNodeOption() {
     return;
   }
 
-  const proxiesList = getProxiesList();
   if (proxiesList.length === 0) {
     logger.error("No proxies available in proxies.txt");
     return;
@@ -206,12 +232,18 @@ async function runExtensionNodeOption() {
     tokens = [];
   }
 
+  // Procesamos cada cuenta
   for (const account of accounts) {
     logger.info(`Processing Account ID: ${account.id}`);
 
     let accessToken;
     if (autoToken) {
-      const loginProxy = proxiesList[account.id - 1] || proxiesList[0];
+      // Asignamos un proxy único para el login
+      if (globalProxyIndex >= proxiesList.length) {
+        logger.error(`Not enough proxies available for login for Account ${account.id}`);
+        continue;
+      }
+      const loginProxy = proxiesList[globalProxyIndex++];
       const proxyIdMatch = loginProxy.match(/socks5:\/\/[^-]+-zone-custom-(?:session|sessid)-([^-\n]+)-sessTime-/);
       const proxyId = proxyIdMatch ? proxyIdMatch[1] : "Unknown";
       let proxyIP = "Unknown";
@@ -222,7 +254,7 @@ async function runExtensionNodeOption() {
         }
       } catch {}
 
-      logger.info(`Using Proxy ID [${proxyId}] with Public IP [${proxyIP}]`);
+      logger.info(`Using Proxy ID [${proxyId}] with Public IP [${proxyIP}] for login`);
       logger.info("Solving Captcha...");
 
       let captchaSolved;
@@ -265,13 +297,25 @@ async function runExtensionNodeOption() {
       accessToken = tokenObj.access_token;
     }
 
-    const MIN_DEVICES = 1;
+    // Determinar de forma aleatoria la cantidad de dispositivos para la cuenta
+    const MIN_DEVICES = 5;
     const MAX_DEVICES = 5;
     const deviceCount = Math.floor(Math.random() * (MAX_DEVICES - MIN_DEVICES + 1)) + MIN_DEVICES;
     logger.info(`Account ${account.id} will connect ${deviceCount} device(s).`);
 
     for (let i = 1; i <= deviceCount; i++) {
-      const deviceProxy = proxiesList[i - 1] || proxiesList[0];
+      // Verificar disponibilidad única de proxy y user‑agent
+      if (globalProxyIndex >= proxiesList.length) {
+        logger.error(`Not enough proxies available for Account ${account.id} Device ${i}`);
+        continue;
+      }
+      if (globalUserAgentIndex >= userAgentsList.length) {
+        logger.error(`Not enough user agents available for Account ${account.id} Device ${i}`);
+        continue;
+      }
+      const deviceProxy = proxiesList[globalProxyIndex++];
+      const deviceUserAgent = userAgentsList[globalUserAgentIndex++];
+
       const deviceProxyIdMatch = deviceProxy.match(/socks5:\/\/[^-]+-zone-custom-(?:session|sessid)-([^-\n]+)-sessTime-/);
       const deviceProxyId = deviceProxyIdMatch ? deviceProxyIdMatch[1] : "Unknown";
 
@@ -280,7 +324,8 @@ async function runExtensionNodeOption() {
           const pingResponse = await trySendPing(
             accessToken,
             deviceProxy,
-            `Account [${account.id}] Device [${i}] with Proxy ID [${deviceProxyId}]`
+            `Account [${account.id}] Device [${i}] with Proxy ID [${deviceProxyId}]`,
+            deviceUserAgent
           );
 
           const { data } = pingResponse;
@@ -302,11 +347,38 @@ async function runExtensionNodeOption() {
     }
   }
 
-  // Keep process alive
+  // Mantener el proceso activo
   while (true) {
     await delay(60000);
   }
 }
+
+// Función que elimina de los archivos los proxies y user‑agents que ya han sido usados
+function deleteProxiesAndAgents() {
+  try {
+    const proxyFilePath = path.join(__dirname, 'proxies.txt');
+    const agentFilePath = path.join(__dirname, 'helpers', 'agents.txt');
+    const remainingProxies = proxiesList.slice(globalProxyIndex);
+    fs.writeFileSync(proxyFilePath, remainingProxies.join('\n'), 'utf8');
+    const remainingAgents = userAgentsList.slice(globalUserAgentIndex);
+    fs.writeFileSync(agentFilePath, remainingAgents.join('\n'), 'utf8');
+    logger.info('Deleted used proxies and user-agents from the files.');
+  } catch (error) {
+    logger.error('Error deleting used proxies and agents: ' + error);
+  }
+}
+
+// Manejadores para limpiar en caso de terminación del proceso
+process.on('SIGINT', () => {
+  logger.info('Process interrupted. Cleaning up proxies and user-agents...');
+  deleteProxiesAndAgents();
+  process.exit();
+});
+
+process.on('exit', () => {
+  logger.info('Process exiting. Cleaning up proxies and user-agents...');
+  deleteProxiesAndAgents();
+});
 
 async function mainMenu() {
   consoleClear();
@@ -337,3 +409,4 @@ async function mainMenu() {
 }
 
 mainMenu();
+
