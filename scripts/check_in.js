@@ -25,7 +25,7 @@ function formatTime(ms) {
 }
 
 async function performCheckIn() {
-  // Load tokens from helpers/tokens.json
+  // Cargar tokens desde helpers/tokens.json
   const tokensFilePath = path.join(__dirname, '..', 'helpers', 'tokens.json');
   let tokens = [];
   try {
@@ -42,21 +42,21 @@ async function performCheckIn() {
     return;
   }
 
-  // Process each account token
+  // Procesar cada token de cuenta
   for (const tokenObj of tokens) {
     const accountId = tokenObj.id;
     const accessToken = tokenObj.access_token;
     console.log(colors.green(`Performing daily Check-In for Account [${accountId}]`));
 
-    // Pick a random proxy for this account
+    // Seleccionar un proxy aleatorio para esta cuenta
     const randomIndex = Math.floor(Math.random() * proxiesList.length);
     const proxy = proxiesList[randomIndex];
 
-    // Extract proxy ID from the proxy string
+    // Extraer proxy ID del string del proxy
     const proxyIdMatch = proxy.match(/socks5:\/\/[^-]+-zone-custom-(?:session|sessid)-([^-\n]+)-sessTime-/);
     const proxyId = proxyIdMatch ? proxyIdMatch[1] : "Unknown";
 
-    // Get the public IP via the proxy
+    // Obtener IP pública a través del proxy
     let proxyIP = "Unknown";
     try {
       const proxyIPResponse = await apis.getProxyIP(proxy);
@@ -64,36 +64,41 @@ async function performCheckIn() {
         proxyIP = proxyIPResponse.data.ip;
       }
     } catch (err) {
-      // Leave proxyIP as "Unknown" if an error occurs
+      // Si hay error, se mantiene "Unknown"
     }
     console.log(colors.green(`Using Proxy ID - [${proxyId}] with Public IP - [${proxyIP}]`));
 
-    // Call the makeCheckIn API
+    // Llamar al API de makeCheckIn
     try {
       const response = await apis.makeCheckIn(accessToken, proxy);
-      // Extract points from the message, e.g., "You earned 10 points."
+      // Extraer puntos del mensaje en caso de éxito (por ejemplo: "+ 30 pt")
       let points = "0";
       if (response.data && response.data.message) {
-        const match = response.data.message.match(/earned (\d+) points/);
+        const match = response.data.message.match(/(\d+)/);
         if (match) {
           points = match[1];
         }
       }
       console.log(colors.green(`Account [${accountId}] Has successfully made check-in & claimed ${points} Points \n`));
     } catch (err) {
-      console.log(colors.green(`Error during check-in for Account [${accountId}]: ${err.message} \n`));
+      // Si error 400, se interpreta que ya se hizo el check-in hoy
+      if (err.response && err.response.status === 400) {
+        console.log(colors.green(`Account [${accountId}] Already checked in today \n`));
+      } else {
+        console.log(colors.green(`Error during check-in for Account [${accountId}]: ${err.message} \n`));
+      }
     }
-    // Wait 5 seconds before processing the next account
+    // Esperar 5 segundos antes de procesar la siguiente cuenta
     await delay(5000);
   }
 
-  // Schedule next execution in a random delay between 24 and 29 hours
-  const lowerBound = 24 * 3600 * 1000; // 24 hours in ms
-  const upperBound = 29 * 3600 * 1000; // 29 hours in ms
+  // Programar la siguiente ejecución en un retraso aleatorio entre 24 y 29 horas
+  const lowerBound = 24 * 3600 * 1000; // 24 horas en ms
+  const upperBound = 29 * 3600 * 1000; // 29 horas en ms
   const nextDelay = Math.floor(Math.random() * (upperBound - lowerBound) + lowerBound);
   console.log(colors.green(`🕥 Script Programmed to Perform next Check-In in ${formatTime(nextDelay)}`));
   setTimeout(performCheckIn, nextDelay);
 }
 
-// Start the check-in process
+// Iniciar el proceso de check-in
 performCheckIn();
