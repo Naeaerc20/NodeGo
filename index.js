@@ -198,7 +198,7 @@ async function registerAccountOption() {
   await inquirer.prompt({ type: 'input', name: 'enter', message: 'Press Enter to return to Main Menu...' });
 }
 
-const PING_INTERVAL_MS = 120000;
+const PING_INTERVAL_MS = 600000;
 
 async function runExtensionNodeOption() {
   const { autoToken } = await inquirer.prompt({
